@@ -8,14 +8,25 @@ public class AIBotController : MonoBehaviour
     public GameObject explosion; // Reference to the explosion GameObject
     public Sprite damagedSprite; // Reference to the damaged sprite
     public Sprite normalSprite; // Reference to the normal sprite
+    public int RewardOnKill = 5;
 
     private Rigidbody2D rb;
     private Vector2 roamPosition;
     private SpriteRenderer spriteRenderer;
+    
     private int health = 3;
 
     private void Start()
     {
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+        {
+            player = playerObject.transform;
+        }
+        else
+        {
+            Debug.LogError("No GameObject with tag 'Player' found in the scene.");
+        }
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         roamPosition = GetRoamingPosition();
@@ -29,14 +40,29 @@ public class AIBotController : MonoBehaviour
         {
             // Chase the player
             Vector2 direction = (player.position - transform.position).normalized;
-            rb.AddForce(direction * speed, ForceMode2D.Force);
+            
+            // Check for walls in the direction of movement
+            if (!IsWallInDirection(direction))
+            {
+                rb.AddForce(direction * speed, ForceMode2D.Force);
+            }
         }
         else
         {
             // Roam around the map
             roamPosition = GetRoamingPosition();
             Vector2 direction = (roamPosition - (Vector2)transform.position).normalized;
-            rb.AddForce(direction * speed, ForceMode2D.Force);
+            
+            // Check for walls in the direction of movement
+            if (!IsWallInDirection(direction))
+            {
+                rb.AddForce(direction * speed, ForceMode2D.Force);
+            }
+        }
+        // Limit the speed
+        if (rb.velocity.magnitude > speed)
+        {
+            rb.velocity = rb.velocity.normalized * speed;
         }
 
         // Flip the sprite based on the direction of movement:
@@ -48,6 +74,17 @@ public class AIBotController : MonoBehaviour
         {
             transform.localScale = new Vector3(1, -1, 1); // Moving left
         }
+    }
+
+    private bool IsWallInDirection(Vector2 direction)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, detectionRange);
+        if (hit.collider != null && hit.collider.CompareTag("Wall"))
+        {
+            // A wall is detected in the direction of movement
+            return true;
+        }
+        return false;
     }
 
     private Vector2 GetRoamingPosition()
@@ -79,6 +116,8 @@ public class AIBotController : MonoBehaviour
         }
     }
     public void Die(){
+                // Increase the score by 1 (or any other value) when the enemy dies
+                ScoreManager.instance.IncreaseScore(RewardOnKill);
                 Instantiate(explosion, transform.position, Quaternion.identity);
                 Destroy(gameObject);
     }

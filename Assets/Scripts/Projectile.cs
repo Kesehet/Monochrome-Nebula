@@ -9,6 +9,8 @@ public class Projectile : MonoBehaviour
     private int numberOfBounces;
 
     public GameObject explosionPrefab;
+    public GameObject splitBulletPrefab;
+    public int numberOfSplitBullets;
 
     public void SetProperties(bool explodesOnImpact, bool splitsIntoMoreBullets, int numberOfBounces)
     {
@@ -19,19 +21,32 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        
-        
-        if(explodesOnImpact){
+        if (splitsIntoMoreBullets && collision.gameObject.CompareTag("Wall"))
+        {
+            SplitBullet();
+        }
+        else if (explodesOnImpact)
+        {
             Explode();
         }
-        else{
+        else
+        {
             Destroy(gameObject);
         }
-
-        
     }
-    private void Explode(){
+
+    private void Explode()
+    {
         Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+        Destroy(gameObject);
+    }
+
+    private void SplitBullet()
+    {
+        for (int i = 0; i < numberOfSplitBullets; i++)
+        {
+            Instantiate(splitBulletPrefab, transform.position, Quaternion.identity);
+        }
         Destroy(gameObject);
     }
 }

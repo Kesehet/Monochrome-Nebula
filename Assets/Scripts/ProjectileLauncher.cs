@@ -12,7 +12,8 @@ public class ProjectileLauncher : MonoBehaviour
     [SerializeField] private bool explodesOnImpact = false;
     [SerializeField] private bool splitsIntoMoreBullets = false;
     [SerializeField] private bool doubleBarrels = false;
-    
+    [SerializeField] private SpriteRenderer gunImage;
+    [SerializeField] private Sprite[] gunSprites;
 
     [Header("Projectile Movement Patterns")]
     [SerializeField] private bool moveStraight = true;
@@ -23,12 +24,20 @@ public class ProjectileLauncher : MonoBehaviour
     [SerializeField] private bool instantaneousBullets = false;
     [SerializeField] private bool bouncingBullets = false;
 
+    
+    public AudioClip[] Sounds; // Sound clip for barrel explosion
+    private AudioSource audioSource; // Reference to the AudioSource component
+
     [Header("Firing Rate")]
     [SerializeField] private float fireRate = 1f; // Number of shots per second
     private float nextFireTime = 0f;
 
     [Header("Projectile List")]
     [SerializeField] private List<GameObject> projectiles = new List<GameObject>();
+
+    void Start(){
+        audioSource = GetComponent<AudioSource>();
+    }
 
     void Update()
     {
@@ -63,6 +72,7 @@ public class ProjectileLauncher : MonoBehaviour
 
     private void LaunchProjectile(Vector2 direction, int gunshotIndex)
     {
+        
         // Calculate the angle of the direction vector
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
@@ -82,6 +92,58 @@ public class ProjectileLauncher : MonoBehaviour
         // Set other properties on the projectile, such as damage, explosion behavior, etc.
         Projectile projectileScript = projectile.GetComponent<Projectile>();
         projectileScript.SetProperties(explodesOnImpact, splitsIntoMoreBullets, numberOfBounces);
+        audioSource.clip = Sounds[gunshotIndex];
+        audioSource.PlayOneShot(Sounds[gunshotIndex]);
     }
+
+
+    private void changeGunImage(int index)
+    {
+        if (gunSprites.Length > 0)
+        {
+            gunImage.sprite = gunSprites[index];
+        }
+        else
+        {
+            Debug.LogWarning("No gun sprites assigned to the array.");
+        }
+    }
+
+    public void changeGunType()
+    {
+        int gunType = Random.Range(0, 3);
+
+        shotgun = gunType == 0;
+        moveStraight = gunType == 1;
+        moveInSineWave = gunType == 2;
+
+        if(moveInSineWave){
+            
+            fireRate = 10;
+        }
+        else if(moveStraight){
+            
+            fireRate = 7;
+        }
+        else{
+            
+            fireRate = 5;
+        }
+
+        changeGunImage(gunType);
+    }
+
+    public void upgradeGunType()
+    {
+        // Set random values for each variable
+        explodesOnImpact = Random.Range(0, 2) == 1; // Random true or false
+        splitsIntoMoreBullets = Random.Range(0, 2) == 1; // Random true or false
+        if(!explodesOnImpact){
+            numberOfBounces = Random.Range(1, 6); // Random integer between 1 and 5
+        }
+        
+    }  
+
+
 
 }

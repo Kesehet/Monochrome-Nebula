@@ -9,6 +9,8 @@ public class CharacterMovement : MonoBehaviour
     [SerializeField] private float acceleration = 10.0f; // Acceleration
     [SerializeField] private float maxVelocity = 5.0f; // Maximum velocity
     [SerializeField] private float damping = 0.9f; // Damping factor to slow down the player
+    [SerializeField] private float oppositeDamping = 0.7f; // Damping factor when moving in the opposite direction  
+
 
     [Header("Dash Parameters")]
     [SerializeField] private float dashSpeed = 10.0f; // Dash speed
@@ -30,31 +32,31 @@ public class CharacterMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        float horizontalInput = Input.GetAxis("Horizontal"); // Get horizontal input (A/D or Left/Right arrow)
-        float verticalInput = Input.GetAxis("Vertical"); // Get vertical input (W/S or Up/Down arrow)
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+        Vector2 movement = new Vector2(horizontalInput, verticalInput);
 
-        Vector2 movement = new Vector2(horizontalInput, verticalInput); // Create movement vector
-
-        // Normalize the movement vector if it exceeds 1 in combined length:
         if (movement.sqrMagnitude > 1)
         {
             movement.Normalize();
         }
 
-        // Apply force to the Rigidbody2D:
         rb.AddForce(movement * acceleration, ForceMode2D.Force);
-
-        // Clamp the velocity to the maximum velocity:
         rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxVelocity);
 
-        // Apply damping if no input is detected and set walking to false
-        if (movement.sqrMagnitude == 0)
+        // Check if the movement direction is opposite to the current velocity direction
+        if (Vector2.Dot(rb.velocity.normalized, movement) < 0)
+        {
+            // Apply higher damping if moving in the opposite direction
+            rb.velocity *= oppositeDamping;
+        }
+        else if (movement.sqrMagnitude == 0)
         {
             rb.velocity *= damping;
             animator.SetBool("walking", false);
         }
-        // If the player is moving left or right
-        else{
+        else
+        {
             animator.SetBool("walking", true);
         }
 
